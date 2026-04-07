@@ -1,0 +1,47 @@
+---
+description: UI では hooks_riverpod と flutter_hooks を推奨する
+globs: "**/*.dart"
+alwaysApply: false
+---
+
+# hooks_riverpod と flutter_hooks
+
+このプロジェクトでは、Riverpod とウィジェットの組み合わせに **`hooks_riverpod`** を、ローカルなウィジェット状態やライフサイクルに **`flutter_hooks`** を推奨する。
+
+## 方針
+
+- **`flutter_riverpod` のみ**の `ConsumerWidget` / `ConsumerStatefulWidget` より、フックが必要な画面では **`HookConsumerWidget`**（または `HookConsumer`）を優先する。
+- 一時的な UI 状態（コントローラ、フォーカス、アニメーション、`useEffect` 相当）は **Riverpod ではなく `flutter_hooks`**（`useState`、`useTextEditingController`、`useMemoized` など）に寄せる。
+- アプリ全体の状態・非同期データはこれまで通り **Riverpod のプロバイダ**で扱う。
+
+## 例
+
+```dart
+// 推奨: hooks_riverpod + flutter_hooks
+class ProfilePage extends HookConsumerWidget {
+  const ProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tab = useState(0);
+    final user = ref.watch(userProvider);
+    return /* ... */;
+  }
+}
+```
+
+```dart
+// フックが不要な極小ウィジェットのみ ConsumerWidget のままでもよい
+class CounterLabel extends ConsumerWidget {
+  /* ref.watch のみで足りる場合 */
+}
+```
+
+## 依存関係
+
+- `pubspec.yaml` に **`hooks_riverpod`** と **`flutter_hooks`** を含める（バージョンはプロジェクト方針に合わせる）。
+- `main` のルートは引き続き **`ProviderScope`** でラップする（`hooks_riverpod` が `flutter_riverpod` を内包するため同様）。
+
+## テスト
+
+- ウィジェットテストでは `ProviderScope` でラップし、`HookConsumerWidget` も通常どおり `tester.pumpWidget` で検証できる。
